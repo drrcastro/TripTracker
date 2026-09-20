@@ -8,11 +8,11 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,7 +25,7 @@ import pt.drprint3d.triptracker.ui.MainScreen
 import pt.drprint3d.triptracker.ui.MainViewModel
 import pt.drprint3d.triptracker.ui.theme.TripTrackerTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
     private var hasAllPermissions by mutableStateOf(false)
@@ -46,9 +46,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.CreateDocument("application/gpx+xml")
     ) { uri: Uri? ->
         uri?.let { fileUri ->
-            contentResolver.openOutputStream(fileUri)?.use { outputStream ->
-                viewModel.exportGpxToStream(outputStream)
-            }
+            viewModel.exportGpxToUri(fileUri)
         }
     }
 

@@ -2,7 +2,10 @@ package pt.drprint3d.triptracker.ui
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +57,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _intervalMinutes = MutableStateFlow(prefsRepo.intervalMinutes)
     val intervalMinutes: StateFlow<Int> = _intervalMinutes.asStateFlow()
 
+    private val _appLanguage = MutableStateFlow(prefsRepo.appLanguage)
+    val appLanguage: StateFlow<String> = _appLanguage.asStateFlow()
+
+    init {
+        val currentLang = prefsRepo.appLanguage
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(currentLang))
+    }
+
     private val _isLoadingSingleSms = MutableStateFlow(false)
     val isLoadingSingleSms: StateFlow<Boolean> = _isLoadingSingleSms.asStateFlow()
 
@@ -94,6 +105,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val clamped = minutes.coerceIn(1, 1440)
         prefsRepo.intervalMinutes = clamped
         _intervalMinutes.value = clamped
+    }
+
+    fun updateAppLanguage(langTag: String) {
+        prefsRepo.appLanguage = langTag
+        _appLanguage.value = langTag
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(langTag))
     }
 
     fun sendSingleSms(context: Context) {
@@ -168,11 +185,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun exportGpxToStream(outputStream: OutputStream) {
+    fun exportGpxToUri(fileUri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val allLogs = logDao.getAllLogsAsc()
-                GpxExporter.exportToStream(allLogs, outputStream)
+                getApplication<Application>().contentResolver.openOutputStream(fileUri)?.use { outputStream ->
+                    val allLogs = logDao.getAllLogsAsc()
+                    GpxExporter.exportToStream(allLogs, outputStream)
+                }
                 withContext(Dispatchers.Main) {
                     Toast.makeText(getApplication(), "Ficheiro GPX exportado com sucesso!", Toast.LENGTH_LONG).show()
                 }

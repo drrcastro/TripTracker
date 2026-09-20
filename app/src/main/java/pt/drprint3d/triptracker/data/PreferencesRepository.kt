@@ -58,4 +58,8 @@ class PreferencesRepository(context: Context) {
             }
         }
         set(value) = prefs.edit().putString("operating_mode", value.name).apply()
+
+    var appLanguage: String
+        get() = prefs.getString("app_language", "pt") ?: "pt"
+        set(value) = prefs.edit().putString("app_language", value).apply()
 }
